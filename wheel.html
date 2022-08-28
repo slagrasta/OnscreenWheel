@@ -1,0 +1,411 @@
+<script language=javascript>
+    // code adapted from https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API/Using_the_Gamepad_API
+    const haveEvents = 'ongamepadconnected' in window;
+    const controllers = {};
+    const isSkippingNonWheels = true;
+	const isDebug = false;
+
+    function connecthandler(e)
+    {
+        addgamepad(e.gamepad);
+    }
+
+    const divPosition = 50;
+    const paddleImageCold = "paddle_cold.png";
+    const paddleImageHot = "paddle_hot.png";
+    const pedalBarWidth = 25;
+    const pedalBarHeight = 50;
+	const buttonImageCold = "button_cold.png";
+	const buttonImageHot = "button_hot.png";
+	const wheelButtonImageCold = "wheelbutton_cold.png";
+	const wheelButtonImageHot = "wheelbutton_hot.png";
+	
+	function CreateButtonDiv(id, positionX, positionY)
+	{
+		const div = document.createElement("div");
+		div.style.position = "fixed";
+		div.style.transform = `translate(${positionX}px, ${positionY}px)`;
+		const divImage = document.createElement("img");
+		divImage.src = buttonImageCold;
+		divImage.setAttribute("id", id);
+		div.appendChild(divImage);
+		document.body.appendChild(div);
+	}
+
+    function CreateWheelDiv()
+    {
+        // WHEEL IMAGERY
+        const wheelDiv = document.createElement("div");
+        wheelDiv.setAttribute("id", "wheelDiv");
+        wheelDiv.style.position = "fixed";
+        wheelDiv.style.transform = "translate(300px, 100px)";
+
+        const rightPaddle = document.createElement("img");
+        rightPaddle.setAttribute("id", "rightPaddle");
+        rightPaddle.src = paddleImageCold;
+        wheelDiv.appendChild(rightPaddle);
+
+        const wheelImage = document.createElement("img");
+        wheelImage.setAttribute("id", "wheelImage");
+        wheelImage.src = "wheel.png";
+        wheelDiv.appendChild(wheelImage);
+
+        const leftPaddle = document.createElement("img");
+        leftPaddle.setAttribute("id", "leftPaddle");
+        leftPaddle.src = paddleImageCold;
+        wheelDiv.appendChild(leftPaddle);
+
+        AddPedalContainer("clutch", 300, 200);
+        AddPedalContainer("brake", 350, 200);
+        AddPedalContainer("gas", 400, 200);
+		
+		const shifterDiv = document.createElement("div");
+		shifterDiv.style.position = "fixed";
+		shifterDiv.style.transform = `translate(450px, 200px)`;
+		shifterImage = document.createElement("img");
+		shifterImage.src = "hpattern.png";
+		shifterDiv.appendChild(shifterImage);
+		document.body.appendChild(shifterDiv);
+		
+		const shiftKnobDiv = document.createElement("div");
+		shiftKnobDiv.style.position = "fixed";
+		shiftKnobDiv.setAttribute("id", "shifter");
+		shiftKnobDiv.style.transform = `translate(461px, 220px)`; // neutral
+		document.body.appendChild(shiftKnobDiv);
+		shiftKnobImage = document.createElement("img");
+		shiftKnobImage.setAttribute("id", "shiftKnob");
+		shiftKnobImage.src = "shiftKnob.png"
+		shiftKnobDiv.appendChild(shiftKnobImage);
+		
+		CreateButtonDiv("RedButton1", 440, 160);
+		CreateButtonDiv("RedButton2", 465, 160);
+		CreateButtonDiv("RedButton3", 490, 160);
+		CreateButtonDiv("RedButton4", 515, 160);
+		
+		CreateButtonDiv("ShifterCrossTop", 475, 100);
+		CreateButtonDiv("ShifterCrossBottom", 475, 125);
+		CreateButtonDiv("ShifterCrossLeft", 455, 112);
+		CreateButtonDiv("ShifterCrossRight", 495, 112);
+		
+		CreateButtonDiv("WheelButton6", 400, 100);
+		CreateButtonDiv("WheelButton7", 295, 100);
+		CreateButtonDiv("WheelButton19", 400, 112);
+		CreateButtonDiv("WheelButton20", 295, 112);
+		CreateButtonDiv("WheelButton21", 400, 124);
+		CreateButtonDiv("WheelButton22", 295, 124);
+
+        document.body.appendChild(wheelDiv);
+	}
+
+    function AddPedalContainer(name, positionX, positionY)
+    {
+        const pedalDiv = document.createElement("div");
+        pedalDiv.setAttribute("id", "pedalDiv");
+        pedalDiv.style.position = "fixed";
+        pedalDiv.style.transform = `translate(${positionX}px, ${positionY}px)`;
+        document.body.appendChild(pedalDiv);
+
+        const container = document.createElement("div");
+        container.style.width = `${pedalBarWidth}px`;
+        container.style.height = `${pedalBarHeight}px`;
+        container.style.backgroundColor = "#4d4d4d";
+		container.style.border = "solid #4d4d4d";
+        pedalDiv.appendChild(container);
+        const bar = document.createElement("div");
+        bar.setAttribute("id", `${name}Bar`);
+        bar.style.width = `${pedalBarWidth}px`;
+        bar.style.height = `${pedalBarHeight}px`;
+        bar.style.backgroundColor = "black";
+        container.appendChild(bar);
+    }
+
+    function addgamepad(gamepad)
+    {
+        if (isSkippingNonWheels && gamepad.id != "G27 Racing Wheel (Vendor: 046d Product: c29b)")
+        		return;
+
+        controllers[gamepad.index] = gamepad;
+
+        CreateWheelDiv();
+
+        const d = document.createElement("div");
+        d.setAttribute("id", `controller${gamepad.index}`);
+        //  d.style.transform = `translateX(${divPosition})`;
+
+        const t = document.createElement("h1");
+        t.textContent = `gamepad: ${gamepad.id}`;
+        d.appendChild(t);
+
+        const a = document.createElement("div");
+        a.className = "axes";
+
+        for (let i = 0; i < gamepad.axes.length; i++)
+        {
+            const d = document.createElement("div");
+            if (i == 0)
+                d.textContent = "steering";
+            else if (i == 2)
+                d.textContent = "gas";
+            else if (i == 5)
+                d.textContent = "brake";
+            else if (i == 6)
+                d.textContent = "clutch";
+            else if (i == 9)
+                d.textContent = "shifter d-pad";
+            else
+                d.textContent = "mystery axis " + i;
+
+            a.appendChild(d);
+            const p = document.createElement("progress");
+            p.className = "axis";
+            p.setAttribute("max", "2");
+            p.setAttribute("value", "1");
+            p.textContent = i;
+            a.appendChild(p);
+        }
+
+        d.appendChild(a);
+
+        const b = document.createElement("div");
+        b.className = "buttons";
+        for (let i = 0; i < gamepad.buttons.length; i++)
+        {
+            const e = document.createElement("span");
+            e.className = "button";
+            e.textContent = i;
+            if (i < 4)
+                e.textContent = `${i} shifter red ${i}`;
+            else if (i == 4)
+                e.textContent = `${i} paddle up`;
+            else if (i == 5)
+                e.textContent = `${i} paddle down`;
+            else if (i == 6)
+                e.textContent = `${i} wheel right top`;
+            else if (i == 7)
+                e.textContent = `${i} wheel left top`;
+            else if (i >= 8 && i <= 13)
+                e.textContent = `${i} shifter gear ${i - 7}`;
+            else if (i == 14)
+                e.textContent = `${i} shifter gear reverse`;
+            else if (i == 15)
+                e.textContent = `${i} shifter cross up`;
+            else if (i == 16)
+                e.textContent = `${i} shifter cross left`;
+            else if (i == 17)
+                e.textContent = `${i} shifter cross down`;
+            else if (i == 18)
+                e.textContent = `${i} shifter cross right`;
+            else if (i == 19)
+                e.textContent = `${i} wheel right middle`;
+            else if (i == 20)
+                e.textContent = `${i} wheel left middle`;
+            else if (i == 21)
+                e.textContent = `${i} wheel right bottom`;
+            else if (i == 22)
+                e.textContent = `${i} wheel left bottom`;
+
+
+            else
+                e.textContent = i;
+
+            b.appendChild(e);
+            b.appendChild(document.createElement("br"));
+        }
+
+        d.appendChild(b);
+
+
+        // See https://github.com/luser/gamepadtest/blob/master/index.html
+        const start = document.getElementById("start");
+        if (start)
+        {
+            start.style.display = "none";
+        }
+
+        document.body.appendChild(d);
+
+        requestAnimationFrame(updateStatus);
+    }
+
+    function disconnecthandler(e)
+    {
+        removegamepad(e.gamepad);
+    }
+
+    function removegamepad(gamepad)
+    {
+        const d = document.getElementById(`controller${gamepad.index}`);
+        document.body.removeChild(d);
+        delete controllers[gamepad.index];
+    }
+
+    function updateStatus()
+    {
+        if (!haveEvents)
+        {
+            scangamepads();
+        }
+
+        for (const j in controllers)
+        {
+            const controller = controllers[j];
+            const d = document.getElementById(`controller${j}`);
+            const buttons = d.getElementsByClassName("button");
+
+			let shiftKnobPosX = 461;
+			let shiftKnobPosY = 220;
+
+            for (let i = 0; i < controller.buttons.length; i++)
+            {
+                const b = buttons[i];
+                let val = controller.buttons[i];
+                let pressed = val === 1.0;
+                if (typeof val === "object")
+                {
+                    pressed = val.pressed;
+                    val = val.value;
+                }
+
+                const pct = `${Math.round(val * 100)}%`;
+                b.style.backgroundSize = `${pct} ${pct}`;
+                b.style.color = "white";
+				
+				if (i >=0 && i <= 3)
+				{
+					document.getElementById(`RedButton${i+1}`).src = pressed ? buttonImageHot : buttonImageCold;
+				}
+
+                if (i == 4 || i == 5)
+                {
+                    const paddleId = (i == 4) ? "leftPaddle" : "rightPaddle";
+                    document.getElementById(paddleId).src = pressed ? paddleImageHot : paddleImageCold;
+                }
+				
+				if (i == 6 || i == 7 || (i >= 19 && i <= 22))
+				{
+                   document.getElementById(`WheelButton${i}`).src = pressed ? wheelButtonImageHot : wheelButtonImageCold;
+				}
+				
+				if (i >= 15 && i <= 18)
+				{
+					let suffix = "error";
+					if (i==15)
+						suffix = "Top";
+					if (i==16)
+						suffix = "Left";
+					if (i==17)
+						suffix = "Bottom";
+					if (i==18)
+						suffix = "Right";
+					
+					document.getElementById(`ShifterCross${suffix}`).src = pressed ? buttonImageHot : buttonImageCold;					
+				}
+				
+				if (pressed)
+				{
+					let gearIndex = i - 7;
+					if(gearIndex > 0 && gearIndex < 8)
+					{					
+						// determine X
+						if (gearIndex == 1 || gearIndex == 2)
+							shiftKnobPosX = 437;
+						else if (gearIndex == 5 || gearIndex == 6)
+							shiftKnobPosX = 485;
+						else if (gearIndex == 7)
+							shiftKnobPosX = 511;
+					
+						// determine Y
+						if (gearIndex == 7)
+							shiftKnobPosY = 265;
+						else if (gearIndex % 2 == 1)
+							shiftKnobPosY = 185;
+						else
+							shiftKnobPosY = 250;
+					}
+				}
+
+                if (pressed)
+                {
+                    //b.className = "button pressed";
+                    b.style.backgroundColor = "red";
+                } else
+                {
+                    b.className = "button";
+                    b.style.backgroundColor = "blue";
+                }
+            }
+			
+			document.getElementById("shifter").style.transform = `translate(${shiftKnobPosX}px, ${shiftKnobPosY}px)`;
+
+
+            const axes = d.getElementsByClassName("axis");
+            for (let i = 0; i < controller.axes.length; i++)
+            {
+                const a = axes[i];
+                //const angle = controller.axes[i] * 90;
+                //	  a.style.transform = `rotate(${angle}deg)`;
+
+                //if (i == 0)
+                //	divPosition = controller.axes[i].toFixed(2) * 50;
+
+                a.textContent = `${i}: ${controller.axes[i].toFixed(4)}`;
+                a.setAttribute("value", controller.axes[i] + 1);
+            }
+
+            const wheelImg = document.getElementById("wheelImage");
+            const wheelAngle = controller.axes[0] * 90;
+            //wheelImg.style.transformOrigin = "41 41"; // fixme: doesn't seem to affect anything (probably neede to be "41px 41px")
+            wheelImg.style.transform = `rotate(${wheelAngle}deg)`;
+
+            if (controller.axes.length > 6) // for testing purposes, we may have a controller with fewer axes connected
+            {
+                const clutchBar = document.getElementById("clutchBar");
+                const clutchRatio = (controller.axes[6] + 1) / 2.0 * pedalBarHeight;
+                clutchBar.style.height = `${clutchRatio}px`;
+            }
+
+            if (controller.axes.length > 5) // for testing purposes, we may have a controller with fewer axes connected
+            {
+                const brakeBar = document.getElementById("brakeBar");
+                const brakeRatio = (controller.axes[5] + 1) / 2.0 * pedalBarHeight;
+                brakeBar.style.height = `${brakeRatio}px`;
+            }
+
+            const gasBar = document.getElementById("gasBar");
+            const gasRatio = (controller.axes[2] + 1) / 2.0 * pedalBarHeight;
+            gasBar.style.height = `${gasRatio}px`;
+        //    gasBar.style.color = "cyan";
+        //    gasBar.textContent = gasRatio;
+        }
+
+
+        requestAnimationFrame(updateStatus);
+    }
+
+    function scangamepads()
+    {
+        const gamepads = navigator.getGamepads();
+        for (const gamepad of gamepads)
+        {
+            if (gamepad)
+            { // Can be null if disconnected during the session
+                if (gamepad.index in controllers)
+                {
+                    controllers[gamepad.index] = gamepad;
+                } else
+                {
+                    addgamepad(gamepad);
+                }
+            }
+        }
+    }
+
+    window.addEventListener("gamepadconnected", connecthandler);
+    window.addEventListener("gamepaddisconnected", disconnecthandler);
+
+    if (!haveEvents)
+    {
+        setInterval(scangamepads, 500);
+    }
+
+</script>
