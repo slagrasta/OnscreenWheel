@@ -1,0 +1,3 @@
+This is just a dirt-simple HTML/Javascript implmentation of an on-screen display for a steering wheel controller. I crop & chroma key out the whitespace and uninteresting debug info using OBS and put it as an overlay when I stream at https://www.twitch.tv/clankotron
+
+At initial commit the code is terrible and mostly lifted from examples on the internet; I will clean it up as I go but I am not a web programmer so it's probably lacking in bset practices. However, if you have your own G27 or other compatable wheel you're welcome to modify and use this for your own purposes. I'd be happy to hear someone finds it useful but I don't demand any attribution.
